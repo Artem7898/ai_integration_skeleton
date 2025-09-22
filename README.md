@@ -7,6 +7,16 @@
 - Политики безопасности: строгая валидация, песочница инструментов, egress‑allowlist
 - Готовые профили запуска: `uvicorn`, `Dockerfile`, `docker-compose`, `Kubernetes` (+ `NetworkPolicy` для egress‑allowlist)
 
+- ## 📌 Ключевые возможности
+- **Единый API** поверх нескольких провайдеров LLM/Embeddings.
+- **Эндпоинт /ask** с потоковой выдачей (SSE/Chunked), контекстом и защитами.
+- **Rate limiting, Idempotency-Key, retries, circuit breaker.**
+- **JWT** с ролями/скоупами; CORS, CSRF (для cookie‑режима).
+- **Кэш** ответов и эмбеддингов (Redis).
+- **Очереди** для тяжелых задач (Celery/Redis).
+- **RFC 7807** формат ошибок, **ETag/Cache-Control**, **cursor‑pagination**.
+- **Observability**: логи JSON, Prometheus метрики, OpenTelemetry трассы.
+
 
 ---
 
@@ -49,7 +59,7 @@ ai_integration_skeleton/
 │  ├─ configmap.yaml
 │  ├─ secret.yaml
 │  └─ networkpolicy-egress-allowlist.yaml
-└─ README.md (этот файл)
+└─ README.md 
 ```
 
 Установи зависимости:
