@@ -7,7 +7,6 @@
 - Политики безопасности: строгая валидация, песочница инструментов, egress‑allowlist
 - Готовые профили запуска: `uvicorn`, `Dockerfile`, `docker-compose`, `Kubernetes` (+ `NetworkPolicy` для egress‑allowlist)
 
-> Твой основной стек (Python 3, Django 4 / FastAPI / Flask / Docker) поддерживается. Здесь — пример на **FastAPI**.
 
 ---
 
