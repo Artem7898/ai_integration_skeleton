@@ -1,0 +1,136 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#1f6feb', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#8b949e', 'secondaryColor': '#238636', 'tertiaryColor': '#f0883e', 'fontFamily': 'Segoe UI, Roboto, Helvetica, Arial, sans-serif'}}}%%
+
+graph TD
+    %% ==================== STYLES ====================
+    classDef client fill:#58a6ff,stroke:#1f6feb,color:#0d1117,stroke-width:2px
+    classDef gateway fill:#7ee787,stroke:#2ea043,color:#0d1117,stroke-width:2px
+    classDef middleware fill:#484f58,stroke:#6e7681,color:#fff,stroke-width:1px
+    classDef endpoint fill:#1f6feb,stroke:#58a6ff,color:#fff,stroke-width:2px
+    classDef provider fill:#238636,stroke:#2ea043,color:#fff,stroke-width:2px
+    classDef rag fill:#a371f7,stroke:#8957e5,color:#fff,stroke-width:2px
+    classDef security fill:#f0883e,stroke:#da3633,color:#fff,stroke-width:2px
+    classDef infra fill:#484f58,stroke:#6e7681,color:#fff,stroke-width:1px
+    classDef cache fill:#58a6ff,stroke:#1f6feb,color:#fff,stroke-width:2px
+    classDef queue fill:#f0883e,stroke:#da3633,color:#fff,stroke-width:2px
+    classDef metrics fill:#7ee787,stroke:#2ea043,color:#0d1117,stroke-width:2px
+    classDef final fill:#238636,stroke:#3fb950,color:#fff,stroke-width:2px
+
+    %% ==================== CLIENT LAYER ====================
+    Client([Frontend / Client]):::client
+
+    %% ==================== FASTAPI GATEWAY ====================
+    subgraph FastAPI["⚡ FastAPI Application (Uvicorn)"]
+        direction TB
+
+        %% Middleware Stack
+        subgraph Middleware["🛡️ Middleware Stack"]
+            direction LR
+            JWT["JWT Auth
+(Roles / Scopes)"]:::middleware
+            RateLimit["Rate Limiting
+(Redis)"]:::middleware
+            CORS["CORS / CSRF"]:::middleware
+            Validate["Request Validation
+(Pydantic v2)"]:::middleware
+        end
+
+        %% Endpoints
+        AskEndpoint["POST /ask
+Streaming / SSE"]:::endpoint
+        HealthEndpoint["GET /health
+Metrics / Traces"]:::endpoint
+
+        %% AI Provider Router
+        subgraph AIRouter["🤖 AI Provider Router"]
+            direction LR
+            OpenAIModule["OpenAI
+• Structured Outputs
+• Tool Calling"]:::provider
+            HFCloud["HF Cloud
+• InferenceClient
+• Serverless"]:::provider
+            HFLocal["HF Local
+• transformers
+• CPU/GPU"]:::provider
+        end
+
+        %% RAG Pipeline
+        subgraph RAGPipeline["📚 LangChain RAG Pipeline"]
+            direction TB
+            Embeddings["Embeddings
+(Hugging Face)"]:::rag
+            VectorStore["Vector Store
+(Local)"]:::rag
+            JsonParser["JSON Output Parser
+(Pydantic validated)"]:::rag
+        end
+
+        %% Safe Tool Sandbox
+        subgraph SafeTools["🔒 Safe Tool Sandbox"]
+            direction TB
+            SchemaVal["Schema Validation
+(Pydantic)"]:::security
+            EgressAllow["Egress Allowlist
+(URL filtering)"]:::security
+            TimeoutGuard["Timeout Guards"]:::security
+        end
+    end
+
+    %% ==================== INFRASTRUCTURE ====================
+    subgraph Infrastructure["🗄️ Infrastructure"]
+        direction LR
+        RedisCache["Redis
+(Response / Embedding Cache)"]:::cache
+        CeleryQueue["Celery
+(Background Queues)"]:::queue
+        PrometheusMetrics["Prometheus
+(Metrics / Alerts)"]:::metrics
+        OpenTelemetry["OpenTelemetry
+(Distributed Tracing)"]:::metrics
+    end
+
+    %% ==================== EXTERNAL APIs ====================
+    subgraph ExternalAPIs["🌐 External APIs"]
+        direction LR
+        OpenAIAPI["OpenAI API"]:::provider
+        HFAPI["Hugging Face API"]:::provider
+    end
+
+    %% ==================== FLOW CONNECTIONS ====================
+    Client -->|"HTTP / SSE"| Middleware
+    Middleware --> AskEndpoint
+    Middleware --> HealthEndpoint
+
+    AskEndpoint -->|"Route by provider"| AIRouter
+    AskEndpoint -->|"RAG mode"| RAGPipeline
+
+    OpenAIModule -->|"API calls"| OpenAIAPI
+    HFCloud -->|"API calls"| HFAPI
+    HFLocal -->|"Local inference"| HFLocal
+
+    RAGPipeline -->|"Augmented query"| OpenAIModule
+
+    AIRouter -->|"Tool execution"| SafeTools
+    SafeTools -->|"Validated result"| AskEndpoint
+
+    AskEndpoint -->|"Cache read/write"| RedisCache
+    AskEndpoint -->|"Offload heavy tasks"| CeleryQueue
+    AskEndpoint -->|"Emit metrics"| PrometheusMetrics
+    AskEndpoint -->|"Trace spans"| OpenTelemetry
+
+    HealthEndpoint -->|"Scrape metrics"| PrometheusMetrics
+    HealthEndpoint -->|"Trace spans"| OpenTelemetry
+
+    %% ==================== RESPONSE FLOW ====================
+    AskEndpoint -->|"JSON Response
+RFC 7807 on error"| Client
+
+    %% ==================== LEGEND ====================
+    subgraph Legend["📋 Legend"]
+        direction LR
+        L1["🔵 Client / Cache"]:::client
+        L2["🟢 AI Providers / Success"]:::provider
+        L3["🟠 Security / Queues"]:::security
+        L4["🟣 RAG / LangChain"]:::rag
+        L5["⚫ Infrastructure"]:::infra
+    end
