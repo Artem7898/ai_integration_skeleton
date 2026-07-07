@@ -210,4 +210,4 @@ Centralized Pydantic-based settings with `.env` support and LRU-cached singleton
 
 ## 📄 License
 
-MIT © [your-org](https://github.com/your-org)
+MIT © [Artem Alimpiev](https://github.com/Artem7898)
